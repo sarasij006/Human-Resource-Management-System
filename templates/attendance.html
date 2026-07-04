@@ -56,6 +56,13 @@
     <div class="card text-center">
         <div class="clock-display" id="liveClock">00:00:00</div>
         <div class="date-display" id="liveDate">Loading date...</div>
+
+        {% if approved_leave_today %}
+        <div class="alert alert-info d-inline-flex align-items-center gap-2 mx-auto mb-4" role="alert">
+            <i class="fa-solid fa-plane-departure"></i>
+            <span>HR has approved leave for today, so attendance actions are locked for this date.</span>
+        </div>
+        {% endif %}
         
         <form method="POST" class="d-flex justify-content-center gap-3">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -109,8 +116,8 @@
                             {% for record in history[:7] %}
                             <tr>
                                 <td><b class="text-dark">{{ record.date.strftime('%d %b, %Y') }}</b></td>
-                                <td>{{ record.check_in.strftime('%I:%M %p') }}</td>
-                                <td>{{ record.check_out.strftime('%I:%M %p') if record.check_out else '<span class="text-muted fst-italic">Pending</span>'|safe }}</td>
+                                <td>{{ record.check_in.strftime('%I:%M %p') if record.check_in else '<span class="text-muted fst-italic">--</span>'|safe }}</td>
+                                <td>{{ record.check_out.strftime('%I:%M %p') if record.check_out else ('<span class="text-muted fst-italic">On Leave</span>' if record.status == 'Leave' else '<span class="text-muted fst-italic">Pending</span>')|safe }}</td>
                                 <td>
                                     <!-- Dynamic Badge Coloring -->
                                     <span class="badge 
@@ -147,8 +154,8 @@
                             {% for record in history %}
                             <tr>
                                 <td><b class="text-dark">{{ record.date.strftime('%d %b, %Y') }}</b></td>
-                                <td>{{ record.check_in.strftime('%I:%M %p') }}</td>
-                                <td>{{ record.check_out.strftime('%I:%M %p') if record.check_out else '<span class="text-muted fst-italic">Pending</span>'|safe }}</td>
+                                <td>{{ record.check_in.strftime('%I:%M %p') if record.check_in else '<span class="text-muted fst-italic">--</span>'|safe }}</td>
+                                <td>{{ record.check_out.strftime('%I:%M %p') if record.check_out else ('<span class="text-muted fst-italic">On Leave</span>' if record.status == 'Leave' else '<span class="text-muted fst-italic">Pending</span>')|safe }}</td>
                                 <td>
                                     <span class="badge 
                                         {% if record.status == 'Present' %}bg-success

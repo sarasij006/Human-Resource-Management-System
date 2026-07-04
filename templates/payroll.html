@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payroll View | HRMS Core</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #F8FAFC; font-family: 'Inter', sans-serif; color: #0F172A; }
+        .container { max-width: 920px; margin-top: 50px; margin-bottom: 50px; }
+        .card { border: 1px solid #E2E8F0; border-radius: 14px; padding: 30px; background: white; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08); }
+        h2, h3 { font-family: 'Poppins', sans-serif; }
+        .summary-box { border: 1px solid #CCFBF1; background: linear-gradient(180deg, #F0FDFA 0%, #FFFFFF 100%); border-radius: 14px; padding: 24px; }
+        .summary-label { color: #0F766E; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+        .summary-value { color: #134E4A; font-size: 28px; font-weight: 700; margin-top: 10px; }
+        .muted-note { color: #64748B; font-size: 14px; }
+        .detail-row { border-bottom: 1px solid #F1F5F9; padding: 14px 0; }
+        .detail-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .detail-label { font-size: 13px; color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+        .detail-value { font-size: 15px; color: #0F172A; font-weight: 600; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="{{ url_for('dashboard') }}" class="text-decoration-none mb-3 d-inline-block text-muted">
+        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+    </a>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-wallet me-2 text-info"></i> Employee Payroll View</h2>
+        <p class="muted-note mb-0">Payroll data is read-only for employees. If anything looks inaccurate, please contact HR for correction.</p>
+    </div>
+
+    <div class="summary-box mb-4">
+        <div class="summary-label">Current Salary Structure</div>
+        <div class="summary-value">{{ user.salary_structure or 'Pending HR Allocation' }}</div>
+    </div>
+
+    <div class="card">
+        <h3 class="mb-4">Payroll Details</h3>
+        <div class="detail-row">
+            <div class="detail-label">Employee ID</div>
+            <div class="detail-value">{{ user.employee_id }}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Corporate Email</div>
+            <div class="detail-value">{{ user.email }}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Job Title</div>
+            <div class="detail-value">{{ user.job_title }}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Payroll Status</div>
+            <div class="detail-value">{% if user.salary_structure and user.salary_structure != 'Pending HR Allocation' %}Configured by HR{% else %}Awaiting HR Allocation{% endif %}</div>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">Salary Structure</div>
+            <div class="detail-value">{{ user.salary_structure or 'Pending HR Allocation' }}</div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

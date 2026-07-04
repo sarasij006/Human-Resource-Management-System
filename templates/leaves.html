@@ -3,80 +3,187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leave Requests | HRMS Core</title>
+    <title>Leave Requests & Attendance | HRMS Core</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
     <style>
         body { background: #F8FAFC; font-family: 'Inter', sans-serif; color: #0F172A; }
-        .container { max-width: 900px; margin-top: 50px; }
-        .card { border: 1px solid #E2E8F0; border-radius: 12px; padding: 30px; background: white; margin-bottom: 25px; }
-        h2 { font-family: 'Poppins', sans-serif; font-weight: 700; margin-bottom: 25px; }
+        .container { max-width: 1000px; margin-top: 50px; margin-bottom: 50px; }
+        .card { border: 1px solid #E2E8F0; border-radius: 12px; padding: 30px; background: white; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        h2 { font-family: 'Poppins', sans-serif; font-weight: 700; margin-bottom: 25px; font-size: 1.5rem; }
         .form-label { font-size: 14px; font-weight: 500; color: #64748B; }
-        .btn-submit { background: #3B82F6; color: white; padding: 10px 25px; font-weight: 600; border-radius: 8px; border: none; }
+        .btn-submit { background: #3B82F6; color: white; padding: 10px 25px; font-weight: 600; border-radius: 8px; border: none; transition: background 0.2s; }
+        .btn-submit:hover { background: #2563EB; }
         table { width: 100%; margin-top: 20px; }
-        th { color: #64748B; font-size: 14px; font-weight: 500; padding: 12px; }
-        td { padding: 15px 12px; border-bottom: 1px solid #F1F5F9; font-size: 14px; }
+        th { color: #64748B; font-size: 14px; font-weight: 600; padding: 12px; background: #F8FAFC; border-radius: 6px; }
+        td { padding: 15px 12px; border-bottom: 1px solid #F1F5F9; font-size: 14px; vertical-align: middle; }
+        #attendanceCalendar { margin-top: 20px; }
+        .fc-event { cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <a href="{{ url_for('dashboard') }}" class="text-decoration-none mb-3 d-block text-muted">
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show shadow bg-white" role="alert">
+                        <i class="fa-solid {% if category == 'success' %}fa-circle-check text-success{% elif category == 'warning' %}fa-triangle-exclamation text-warning{% else %}fa-circle-exclamation text-danger{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <a href="{{ url_for('dashboard') }}" class="text-decoration-none mb-4 d-inline-block text-muted">
         <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
     </a>
 
-    <!-- Leave Application Form -->
     <div class="card">
-        <h2><i class="fa-solid fa-file-signature me-2"></i> Apply for Leave</h2>
-        <form method="POST">
+        <h2><i class="fa-solid fa-file-signature me-2 text-primary"></i> Apply for Leave</h2>
+        <form method="POST" action="{{ url_for('leave_requests') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="start_date" id="start_date">
+            <input type="hidden" name="end_date" id="end_date">
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Start Date</label>
-                    <input type="date" name="start_date" class="form-control" required>
+                    <label class="form-label">Leave Type</label>
+                    <select name="leave_type" class="form-select" required>
+                        <option value="" disabled selected>Select Leave Type</option>
+                        <option value="Paid">Paid Leave</option>
+                        <option value="Sick">Sick Leave</option>
+                        <option value="Unpaid">Unpaid Leave</option>
+                    </select>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">End Date</label>
-                    <input type="date" name="end_date" class="form-control" required>
+                    <label class="form-label">Select Date Range</label>
+                    <input type="text" id="date_range" name="date_range" class="form-control bg-white" placeholder="Select dates on calendar..." required readonly>
                 </div>
                 <div class="col-12 mb-3">
-                    <label class="form-label">Reason</label>
-                    <textarea name="reason" class="form-control" rows="3" required></textarea>
+                    <label class="form-label">Remarks / Reason</label>
+                    <textarea name="remarks" class="form-control" rows="3" placeholder="Please provide additional details..." required></textarea>
                 </div>
             </div>
             <button type="submit" class="btn-submit">Submit Request</button>
         </form>
     </div>
 
-    <!-- Leave History Table -->
     <div class="card">
-        <h2>Leave History</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Period</th>
-                    <th>Reason</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for req in requests %}
-                <tr>
-                    <td>{{ req.start_date }} to {{ req.end_date }}</td>
-                    <td>{{ req.reason }}</td>
-                    <td>
-                        <span class="badge {% if req.status == 'Approved' %}bg-success{% elif req.status == 'Pending' %}bg-warning{% else %}bg-danger{% endif %}">
-                            {{ req.status }}
-                        </span>
-                    </td>
-                </tr>
+        <h2><i class="fa-solid fa-hourglass-half me-2 text-primary"></i> Pending HR Review</h2>
+        {% if pending_leaves %}
+            <div class="row g-3">
+                {% for req in pending_leaves %}
+                    <div class="col-md-6">
+                        <div class="border rounded-3 p-3 h-100" style="border-color: #E2E8F0 !important; background: #FFFBEB;">
+                            <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                <strong>{{ req.leave_type }} Leave</strong>
+                                <span class="badge bg-warning text-dark">{{ req.status }}</span>
+                            </div>
+                            <div class="text-muted small mb-2">{{ req.start_date }} to {{ req.end_date }}</div>
+                            <div class="small">{{ req.remarks }}</div>
+                        </div>
+                    </div>
                 {% endfor %}
-            </tbody>
-        </table>
+            </div>
+        {% else %}
+            <p class="text-muted mb-0">There are no leave requests waiting for HR approval.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2><i class="fa-regular fa-calendar-days me-2 text-primary"></i> Monthly Attendance & Leave Status</h2>
+        <div id="attendanceCalendar"></div>
+    </div>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i> Leave History</h2>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Leave Type</th>
+                        <th>Period</th>
+                        <th>Remarks</th>
+                        <th>HR Comments</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in all_leaves %}
+                    <tr>
+                        <td><strong>{{ req.leave_type }}</strong></td>
+                        <td>{{ req.start_date }} to {{ req.end_date }}</td>
+                        <td>{{ req.remarks }}</td>
+                        <td>{{ req.hr_comments or 'No HR comments yet.' }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if req.status == 'Approved' %}bg-success
+                                {% elif req.status == 'Pending' %}bg-warning text-dark
+                                {% else %}bg-danger{% endif %}">
+                                {{ req.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">No leave requests have been submitted yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var startDateInput = document.getElementById('start_date');
+        var endDateInput = document.getElementById('end_date');
+
+        flatpickr("#date_range", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            showMonths: 2,
+            onClose: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length === 1) {
+                    var singleDate = instance.formatDate(selectedDates[0], "Y-m-d");
+                    startDateInput.value = singleDate;
+                    endDateInput.value = singleDate;
+                } else if (selectedDates.length === 2) {
+                    startDateInput.value = instance.formatDate(selectedDates[0], "Y-m-d");
+                    endDateInput.value = instance.formatDate(selectedDates[1], "Y-m-d");
+                } else {
+                    startDateInput.value = "";
+                    endDateInput.value = "";
+                }
+            }
+        });
+
+        var calendarEl = document.getElementById('attendanceCalendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            height: 600,
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth'
+            },
+            events: "{{ url_for('api_get_attendance_events') }}"
+        });
+        calendar.render();
+    });
+</script>
 </body>
 </html>

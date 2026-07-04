@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Dashboard | HRMS Core</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        body { background: #F8FAFC; font-family: 'Inter', sans-serif; color: #0F172A; }
+        .container-fluid { max-width: 1440px; margin-top: 30px; margin-bottom: 50px; }
+        .card { border: 1px solid #E2E8F0; border-radius: 12px; padding: 25px; background: white; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08); }
+        h2, h3, h4, h5 { font-family: 'Poppins', sans-serif; }
+        h2 { font-weight: 700; margin-bottom: 20px; font-size: 1.5rem; }
+        .nav-tabs .nav-link { font-weight: 600; color: #64748B; border: none; border-bottom: 3px solid transparent; padding: 12px 20px; }
+        .nav-tabs .nav-link.active { color: #3B82F6; border-bottom: 3px solid #3B82F6; background: transparent; }
+        .nav-tabs .nav-link:hover { color: #3B82F6; }
+        table { width: 100%; margin-top: 15px; }
+        th { color: #64748B; font-size: 14px; font-weight: 600; padding: 12px; background: #F8FAFC; border-radius: 6px; white-space: nowrap; }
+        td { padding: 15px 12px; border-bottom: 1px solid #F1F5F9; font-size: 14px; vertical-align: middle; }
+        .btn-action { padding: 7px 12px; font-size: 13px; font-weight: 600; border-radius: 8px; border: none; transition: 0.2s; }
+        .btn-approve { background: #10B981; color: white; }
+        .btn-approve:hover { background: #059669; }
+        .btn-reject { background: #EF4444; color: white; }
+        .btn-reject:hover { background: #DC2626; }
+        .btn-edit { background: #F1F5F9; color: #334155; }
+        .btn-edit:hover { background: #E2E8F0; }
+        .summary-card { border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px 20px; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); height: 100%; }
+        .summary-label { font-size: 13px; color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+        .summary-value { font-size: 28px; font-weight: 700; color: #0F172A; line-height: 1.1; margin-top: 10px; }
+        .summary-detail { font-size: 13px; color: #64748B; margin-top: 8px; }
+        .scope-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: #EFF6FF; color: #1D4ED8; font-size: 13px; font-weight: 600; }
+        .modal .form-label { color: #64748B; font-size: 13px; font-weight: 600; }
+        .empty-state { color: #64748B; text-align: center; padding: 24px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show shadow bg-white" role="alert">
+                        <i class="fa-solid {% if category == 'success' %}fa-circle-check text-success{% elif category == 'warning' %}fa-triangle-exclamation text-warning{% else %}fa-circle-exclamation text-danger{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h2 class="mb-1"><i class="fa-solid fa-shield-halved me-2 text-primary"></i> HR Administration Console</h2>
+            <div class="text-muted">Manage employees, approve leave, and review company-wide attendance from one place.</div>
+        </div>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm fw-bold"><i class="fa-solid fa-power-off me-1"></i> Logout</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="summary-card">
+                <div class="summary-label">System Users</div>
+                <div class="summary-value">{{ employees|length }}</div>
+                <div class="summary-detail">All registered employees and HR accounts.</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="summary-card">
+                <div class="summary-label">Pending Leaves</div>
+                <div class="summary-value">{{ pending_leave_count }}</div>
+                <div class="summary-detail">Requests waiting for an HR decision.</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="summary-card">
+                <div class="summary-label">Today's Attendance Records</div>
+                <div class="summary-value">{{ checked_in_today_count }}</div>
+                <div class="summary-detail">Includes present, half-day, and approved leave entries.</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="summary-card">
+                <div class="summary-label">Payroll Ready</div>
+                <div class="summary-value">{{ payroll_ready_count }}</div>
+                <div class="summary-detail">Employee records with payroll data configured.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h5 class="fw-bold mb-2">Employee Switcher</h5>
+                <div class="scope-pill">
+                    <i class="fa-solid fa-filter"></i>
+                    {{ selected_employee.employee_id + ' - ' + selected_employee.email if selected_employee else 'Viewing all employees' }}
+                </div>
+            </div>
+            <form method="GET" action="{{ url_for('hr_dashboard') }}" class="d-flex flex-wrap align-items-center gap-2">
+                <label for="employee_id" class="small text-muted fw-semibold mb-0">View Records For</label>
+                <select name="employee_id" id="employee_id" class="form-select" style="min-width: 260px;">
+                    <option value="all" {% if selected_employee_id == 'all' %}selected{% endif %}>All Employees</option>
+                    {% for emp in employees %}
+                        <option value="{{ emp.id }}" {% if selected_employee_id == emp.id|string %}selected{% endif %}>
+                            {{ emp.employee_id }} - {{ emp.email }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">Apply</button>
+            </form>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-4" id="hrTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="employees-tab" data-bs-toggle="tab" data-bs-target="#employees-pane" type="button" role="tab"><i class="fa-solid fa-users me-2"></i> Employee Directory</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="leaves-tab" data-bs-toggle="tab" data-bs-target="#leaves-pane" type="button" role="tab"><i class="fa-solid fa-file-signature me-2"></i> Leave Requests</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance-pane" type="button" role="tab"><i class="fa-solid fa-clock-rotate-left me-2"></i> Attendance</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="payroll-tab" data-bs-toggle="tab" data-bs-target="#payroll-pane" type="button" role="tab"><i class="fa-solid fa-wallet me-2"></i> Payroll</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="hrTabsContent">
+        <div class="tab-pane fade show active" id="employees-pane" role="tabpanel">
+            <div class="card">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                    <h5 class="fw-bold mb-0">Employee Directory</h5>
+                    <span class="text-muted small">HR can edit full employee records, while employees only edit limited profile fields.</span>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Emp ID</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Job Title</th>
+                                <th>Salary</th>
+                                <th>Contact</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for emp in employees %}
+                            <tr>
+                                <td><strong>{{ emp.employee_id }}</strong></td>
+                                <td>{{ emp.email }}</td>
+                                <td><span class="badge {% if emp.role == 'HR' %}bg-dark{% else %}bg-secondary{% endif %}">{{ emp.role }}</span></td>
+                                <td>{{ emp.job_title }}</td>
+                                <td>{{ emp.salary_structure }}</td>
+                                <td>
+                                    <div>{{ emp.phone or 'No phone' }}</div>
+                                    <small class="text-muted">{{ emp.address or 'No address on file' }}</small>
+                                </td>
+                                <td>
+                                    <button class="btn-action btn-edit" data-bs-toggle="modal" data-bs-target="#editEmployeeModal{{ emp.id }}">
+                                        <i class="fa-solid fa-pen me-1"></i> Edit
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <div class="modal fade" id="editEmployeeModal{{ emp.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                                    <div class="modal-content">
+                                        <form method="POST" action="{{ url_for('hr_edit_employee', user_id=emp.id) }}#employees-pane">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="return_employee_id" value="{{ selected_employee_id }}">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title fw-bold">Edit Employee: {{ emp.employee_id }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Employee ID</label>
+                                                        <input type="text" name="employee_id" class="form-control" value="{{ emp.employee_id }}" required>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Corporate Email</label>
+                                                        <input type="email" name="email" class="form-control" value="{{ emp.email }}" required>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Phone</label>
+                                                        <input type="text" name="phone" class="form-control" value="{{ emp.phone or '' }}">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">System Role</label>
+                                                        <select name="role" class="form-select">
+                                                            <option value="Employee" {% if emp.role == 'Employee' %}selected{% endif %}>Employee</option>
+                                                            <option value="HR" {% if emp.role == 'HR' %}selected{% endif %}>HR Admin</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Job Title</label>
+                                                        <input type="text" name="job_title" class="form-control" value="{{ emp.job_title or '' }}">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Salary Structure</label>
+                                                        <input type="text" name="salary_structure" class="form-control" value="{{ emp.salary_structure or '' }}">
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label class="form-label">Address</label>
+                                                        <textarea name="address" class="form-control" rows="3">{{ emp.address or '' }}</textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="empty-state">No employees have been registered yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="leaves-pane" role="tabpanel">
+            <div class="card">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                    <h5 class="fw-bold mb-0">Leave Requests{% if selected_employee %} for {{ selected_employee.employee_id }}{% endif %}</h5>
+                    <span class="text-muted small">Approved leave writes back into attendance immediately.</span>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Leave Type</th>
+                                <th>Dates</th>
+                                <th>Remarks</th>
+                                <th>HR Comments</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in leave_requests %}
+                            <tr>
+                                <td><strong>{{ req.user.employee_id }}</strong><br><small class="text-muted">{{ req.user.email }}</small></td>
+                                <td>{{ req.leave_type }}</td>
+                                <td>{{ req.start_date }} to {{ req.end_date }}</td>
+                                <td>{{ req.remarks }}</td>
+                                <td>{{ req.hr_comments or 'No comments yet.' }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if req.status == 'Approved' %}bg-success
+                                        {% elif req.status == 'Pending' %}bg-warning text-dark
+                                        {% else %}bg-danger{% endif %}">
+                                        {{ req.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if req.status == 'Pending' %}
+                                    <button class="btn-action btn-approve me-1" data-bs-toggle="modal" data-bs-target="#processLeaveModal{{ req.id }}" data-action="Approved">
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
+                                    <button class="btn-action btn-reject" data-bs-toggle="modal" data-bs-target="#processLeaveModal{{ req.id }}" data-action="Rejected">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                    {% else %}
+                                    <span class="text-muted small">Processed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                            <div class="modal fade" id="processLeaveModal{{ req.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form method="POST" action="{{ url_for('hr_process_leave', request_id=req.id) }}#leaves-pane">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="status" value="">
+                                            
+                                            <div class="modal-header">
+                                                <h5 class="modal-title fw-bold">Process Leave Request</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p class="mb-3">Processing leave for <strong>{{ req.user.employee_id }}</strong> from {{ req.start_date }} to {{ req.end_date }}.</p>
+                                                <div class="mb-3">
+                                                    <label class="form-label">HR Comments (Optional)</label>
+                                                    <textarea name="hr_comments" class="form-control" rows="3" placeholder="Add approval or rejection notes for the employee...">{{ req.hr_comments or '' }}</textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="submit" class="btn btn-primary w-100">Confirm Action</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="empty-state">No leave requests found for the current scope.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="attendance-pane" role="tabpanel">
+            <div class="card">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                    <h5 class="fw-bold mb-0">Attendance Records{% if selected_employee %} for {{ selected_employee.employee_id }}{% endif %}</h5>
+                    <span class="text-muted small">Employee check-ins and approved leave now live in the same attendance history.</span>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Employee</th>
+                                <th>Check In</th>
+                                <th>Check Out</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for att in attendance_records %}
+                            <tr>
+                                <td>{{ att.date }}</td>
+                                <td><strong>{{ att.user.employee_id }}</strong></td>
+                                <td>{{ att.check_in.strftime('%H:%M:%S') if att.check_in else '--:--' }}</td>
+                                <td>{{ att.check_out.strftime('%H:%M:%S') if att.check_out else ('On Leave' if att.status == 'Leave' else '--:--') }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if att.status == 'Present' %}bg-success
+                                        {% elif att.status == 'Half Day' %}bg-warning text-dark
+                                        {% elif att.status == 'Leave' %}bg-info text-dark
+                                        {% else %}bg-danger{% endif %}">
+                                        {{ att.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="empty-state">No attendance records found for the current scope.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="payroll-pane" role="tabpanel">
+            <div class="card">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                    <h5 class="fw-bold mb-0">Payroll Control{% if selected_employee %} for {{ selected_employee.employee_id }}{% endif %}</h5>
+                    <span class="text-muted small">HR can view payroll for all employees and update salary structure to keep records accurate.</span>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Role</th>
+                                <th>Job Title</th>
+                                <th>Salary Structure</th>
+                                <th>Payroll Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for emp in payroll_employees %}
+                                <tr>
+                                    <td><strong>{{ emp.employee_id }}</strong><br><small class="text-muted">{{ emp.email }}</small></td>
+                                    <td>{{ emp.role }}</td>
+                                    <td>{{ emp.job_title }}</td>
+                                    <td>{{ emp.salary_structure or 'Pending HR Allocation' }}</td>
+                                    <td>
+                                        <span class="badge {% if emp.salary_structure and emp.salary_structure != 'Pending HR Allocation' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                                            {% if emp.salary_structure and emp.salary_structure != 'Pending HR Allocation' %}Configured{% else %}Pending{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn-action btn-edit" data-bs-toggle="modal" data-bs-target="#editPayrollModal{{ emp.id }}">
+                                            <i class="fa-solid fa-pen me-1"></i> Update
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <div class="modal fade" id="editPayrollModal{{ emp.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <form method="POST" action="{{ url_for('hr_update_payroll', user_id=emp.id) }}#payroll-pane">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <input type="hidden" name="return_employee_id" value="{{ selected_employee_id }}">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title fw-bold">Update Payroll: {{ emp.employee_id }}</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Job Title</label>
+                                                        <input type="text" class="form-control" value="{{ emp.job_title }}" disabled>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Salary Structure</label>
+                                                        <textarea name="salary_structure" class="form-control" rows="4" placeholder="Example: Basic 40,000 + HRA 12,000 + Bonus as per policy" required>{{ emp.salary_structure or '' }}</textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="submit" class="btn btn-primary">Save Payroll</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="empty-state">No payroll records available yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var processButtons = document.querySelectorAll('[data-bs-target^="#processLeaveModal"]');
+        processButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                var action = this.getAttribute('data-action');
+                var targetModalId = this.getAttribute('data-bs-target');
+                var modal = document.querySelector(targetModalId);
+                var input = modal.querySelector('input[name="status"]');
+                var submitBtn = modal.querySelector('.modal-footer .btn');
+
+                input.value = action;
+                submitBtn.textContent = 'Confirm ' + action;
+                submitBtn.className = action === 'Approved' ? 'btn w-100 btn-success' : 'btn w-100 btn-danger';
+            });
+        });
+
+        var hash = window.location.hash;
+        if (hash) {
+            var trigger = document.querySelector('[data-bs-target="' + hash + '"]');
+            if (trigger) {
+                bootstrap.Tab.getOrCreateInstance(trigger).show();
+            }
+        }
+
+        document.querySelectorAll('#hrTabs button[data-bs-toggle="tab"]').forEach(function(tabButton) {
+            tabButton.addEventListener('shown.bs.tab', function(event) {
+                var target = event.target.getAttribute('data-bs-target');
+                history.replaceState(null, '', target);
+            });
+        });
+    });
+</script>
+</body>
+</html>

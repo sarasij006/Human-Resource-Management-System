@@ -138,7 +138,7 @@
         /* 3-Column Metric Cards Grid */
         .cards {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 24px;
             margin-bottom: 40px;
         }
@@ -175,6 +175,7 @@
         .blue { background: #EFF6FF; color: #2563EB; }
         .green { background: #F0FDF4; color: #16A34A; }
         .orange { background: #FFF7ED; color: #EA580C; }
+        .teal { background: #ECFEFF; color: #0F766E; }
 
         .card-custom h3 {
             font-size: 16px;
@@ -230,6 +231,7 @@
         }
         .completed { background: #DCFCE7; color: #166534; }
         .pending { background: #FEF3C7; color: #92400E; }
+        .rejected { background: #FEE2E2; color: #991B1B; }
 
         /* Alerts */
         .alert-box {
@@ -290,7 +292,7 @@
                 
                 <!-- Avatar acting as Dropdown Toggle -->
                 <div class="avatar dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="padding: 0; border: 2px solid #E2E8F0; overflow: hidden; background: white;">
-                    <img src="{{ url_for('static', filename='profile_pics/' + current_user.profile_picture) }}" 
+                    <img src="{% if current_user.profile_picture %}{{ url_for('static', filename='profile_pics/' + current_user.profile_picture) }}{% else %}https://ui-avatars.com/api/?name={{ current_user.employee_id }}&background=3B82F6&color=fff&size=100{% endif %}" 
                          onerror="this.src='https://ui-avatars.com/api/?name={{ current_user.employee_id }}&background=3B82F6&color=fff&size=100';" 
                          style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" 
                          alt="Avatar">
@@ -347,6 +349,14 @@
                 <h3>Leave Request</h3>
                 <p>Track time-off approvals</p>
             </a>
+
+            <a href="{{ url_for('payroll') }}" class="card-custom">
+                <div class="card-icon teal">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+                <h3>Payroll</h3>
+                <p>View salary structure details</p>
+            </a>
         </div>
 
         <!-- Bottom Grid (Activity & Alerts dynamically generated) -->
@@ -356,7 +366,15 @@
                 {% for record in attendance %}
                 <div class="activity">
                     <div>
-                        <b>Check In: {{ record.check_in.strftime('%I:%M %p') }}</b>
+                        <b>
+                            {% if record.check_in %}
+                                Check In: {{ record.check_in.strftime('%I:%M %p') }}
+                            {% elif record.status == 'Leave' %}
+                                Approved Leave
+                            {% else %}
+                                Check In Pending
+                            {% endif %}
+                        </b>
                         <p>{{ record.date }}</p>
                     </div>
                     <div class="status completed">Logged</div>
@@ -367,14 +385,17 @@
             </div>
 
             <div class="panel">
-                <h2>Pending Leave Requests</h2>
+                <h2>Leave Status Updates</h2>
                 {% for leave in leaves %}
                 <div class="alert-box">
-                    <i class="fa-solid fa-hourglass-half"></i>
-                    <div>{{ leave.start_date }} to {{ leave.end_date }} ({{ leave.status }})</div>
+                    <i class="fa-solid {% if leave.status == 'Approved' %}fa-circle-check{% elif leave.status == 'Rejected' %}fa-circle-xmark{% else %}fa-hourglass-half{% endif %}"></i>
+                    <div>
+                        <div><strong>{{ leave.leave_type }} Leave</strong>: {{ leave.start_date }} to {{ leave.end_date }}</div>
+                        <div class="small text-muted">{{ leave.status }}{% if leave.hr_comments %} - {{ leave.hr_comments }}{% endif %}</div>
+                    </div>
                 </div>
                 {% else %}
-                <p class="text-muted small" style="margin: 0;">No pending leave requests.</p>
+                <p class="text-muted small" style="margin: 0;">No leave requests submitted yet.</p>
                 {% endfor %}
             </div>
         </div>
