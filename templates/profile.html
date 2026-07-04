@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | HRMS Core</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #F8FAFC; font-family: 'Inter', sans-serif; color: #0F172A; }
+        .container { max-width: 800px; margin-top: 50px; margin-bottom: 50px; }
+        .card { border: 1px solid #E2E8F0; border-radius: 12px; padding: 30px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        h2 { font-family: 'Poppins', sans-serif; font-weight: 700; margin-bottom: 25px; }
+        .form-label { font-size: 14px; font-weight: 500; color: #64748B; margin-top: 10px; }
+        .form-control { border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px; }
+        .form-control:disabled { background-color: #F1F5F9; cursor: not-allowed; }
+        .btn-primary { background: #3B82F6; border: none; padding: 10px 20px; font-weight: 600; }
+        .section-title { font-size: 1.1rem; font-weight: 600; color: #334155; border-bottom: 2px solid #F1F5F9; padding-bottom: 8px; margin-top: 25px; margin-bottom: 15px; }
+        
+        /* Profile Picture Styling */
+        .profile-header { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #F1F5F9; }
+        .profile-img-container { position: relative; width: 90px; height: 90px; }
+        .profile-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 3px solid #EFF6FF; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+
+    <!-- Flask Flash Messages -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show shadow bg-white" role="alert">
+                        <i class="fa-solid {% if category == 'success' %}fa-circle-check text-success{% else %}fa-circle-exclamation text-danger{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+<div class="container">
+    <a href="{{ url_for('dashboard') }}" class="text-decoration-none mb-3 d-block text-muted">
+        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+    </a>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-user-gear me-2"></i> Employee Profile</h2>
+        
+        <!-- SECTION 1: Personal Details (Admin Prefilled) -->
+        <h5 class="section-title">Personal Details</h5>
+        <div class="mb-3">
+            <label class="form-label">Employee ID</label>
+            <input type="text" class="form-control" value="{{ user.employee_id }}" disabled>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Corporate Email</label>
+            <input type="email" class="form-control" value="{{ user.email }}" disabled>
+        </div>
+
+        <!-- SECTION 2: Job Details (Admin Prefilled) -->
+        <h5 class="section-title">Job Details</h5>
+        <div class="mb-3">
+            <label class="form-label">Job Title</label>
+            <input type="text" class="form-control" value="{{ user.job_title }}" disabled>
+        </div>
+
+        <!-- SECTION 3: Salary Structure (Admin Prefilled) -->
+        <h5 class="section-title">Salary Structure</h5>
+        <div class="mb-3">
+            <label class="form-label">Current Package / Structure</label>
+            <input type="text" class="form-control" value="{{ user.salary_structure }}" disabled>
+        </div>
+
+        <!-- SECTION 4: Documents Uploaded (Admin Prefilled) -->
+        <h5 class="section-title">Documents Uploaded</h5>
+        <div class="mb-4">
+            <ul class="list-group">
+                <!-- Example placeholders - replace with backend logic if dynamic -->
+                <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color: #F1F5F9;">
+                    Employment Contract
+                    <span class="badge bg-success rounded-pill"><i class="fa-solid fa-check"></i> On File</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color: #F1F5F9;">
+                    Government ID Proof
+                    <span class="badge bg-success rounded-pill"><i class="fa-solid fa-check"></i> On File</span>
+                </li>
+            </ul>
+            <small class="text-muted d-block mt-2"><i class="fa-solid fa-circle-info me-1"></i> These documents are managed by your HR Administrator.</small>
+        </div>
+
+        <!-- SECTION 5: Editable Profile Information -->
+        <h5 class="section-title text-primary"><i class="fa-solid fa-pen-to-square me-2"></i> Editable Information</h5>
+        
+        <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <!-- Profile Picture -->
+            <div class="profile-header mt-3">
+                <div class="profile-img-container">
+                    <img src="{% if user.profile_picture %}{{ url_for('static', filename='profile_pics/' + user.profile_picture) }}{% else %}https://ui-avatars.com/api/?name={{ user.employee_id }}&background=3B82F6&color=fff&size=150{% endif %}" 
+                         onerror="this.src='https://ui-avatars.com/api/?name={{ user.employee_id }}&background=3B82F6&color=fff&size=150';" 
+                         class="profile-img" alt="Profile Picture">
+                </div>
+                <div class="flex-grow-1">
+                    <label class="form-label text-dark fw-bold mb-1 mt-0">Update Profile Picture</label>
+                    <p class="text-muted small mb-2">Recommended: Square image (JPG, PNG). Max size: 2MB.</p>
+                    <input class="form-control form-control-sm w-75" type="file" name="profile_picture" accept="image/png, image/jpeg, image/jpg">
+                </div>
+            </div>
+
+            <!-- Phone Number -->
+            <div class="mb-3">
+                <label class="form-label text-dark fw-bold">Phone Number</label>
+                <input type="tel" name="phone" class="form-control" value="{{ user.phone or '' }}" placeholder="Enter your mobile number">
+            </div>
+
+            <!-- Residential Address -->
+            <div class="mb-4">
+                <label class="form-label text-dark fw-bold">Residential Address</label>
+                <textarea name="address" class="form-control" rows="3" placeholder="Enter your full address">{{ user.address or '' }}</textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100 py-3 mt-2 fs-6">Save Profile Changes</button>
+        </form>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

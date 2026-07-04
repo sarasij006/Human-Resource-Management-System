@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leave Requests | HRMS Core</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #F8FAFC; font-family: 'Inter', sans-serif; color: #0F172A; }
+        .container { max-width: 900px; margin-top: 50px; }
+        .card { border: 1px solid #E2E8F0; border-radius: 12px; padding: 30px; background: white; margin-bottom: 25px; }
+        h2 { font-family: 'Poppins', sans-serif; font-weight: 700; margin-bottom: 25px; }
+        .form-label { font-size: 14px; font-weight: 500; color: #64748B; }
+        .btn-submit { background: #3B82F6; color: white; padding: 10px 25px; font-weight: 600; border-radius: 8px; border: none; }
+        table { width: 100%; margin-top: 20px; }
+        th { color: #64748B; font-size: 14px; font-weight: 500; padding: 12px; }
+        td { padding: 15px 12px; border-bottom: 1px solid #F1F5F9; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="{{ url_for('dashboard') }}" class="text-decoration-none mb-3 d-block text-muted">
+        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+    </a>
+
+    <!-- Leave Application Form -->
+    <div class="card">
+        <h2><i class="fa-solid fa-file-signature me-2"></i> Apply for Leave</h2>
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" name="start_date" class="form-control" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">End Date</label>
+                    <input type="date" name="end_date" class="form-control" required>
+                </div>
+                <div class="col-12 mb-3">
+                    <label class="form-label">Reason</label>
+                    <textarea name="reason" class="form-control" rows="3" required></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn-submit">Submit Request</button>
+        </form>
+    </div>
+
+    <!-- Leave History Table -->
+    <div class="card">
+        <h2>Leave History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Period</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                <tr>
+                    <td>{{ req.start_date }} to {{ req.end_date }}</td>
+                    <td>{{ req.reason }}</td>
+                    <td>
+                        <span class="badge {% if req.status == 'Approved' %}bg-success{% elif req.status == 'Pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                            {{ req.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

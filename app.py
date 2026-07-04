@@ -12,7 +12,8 @@ from flask_mail import Mail, Message
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
-
+import os
+from werkzeug.utils import secure_filename
 from config import config_mapping
 
 # ---------------------------------------------------------------------------
@@ -62,68 +63,66 @@ def health_check():
 # ---------------------------------------------------------------------------
 # 2. DATABASE MODELS
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# 2. DATABASE MODELS (EXPANDED FOR HRMS)
+# ---------------------------------------------------------------------------
 class User(db.Model, UserMixin):
-    """
-    Production-grade User entity mapping system authentication and identity profiles.
-    Compatible with both SQLite development and PostgreSQL production layers.
-    """
     __tablename__ = 'users'
-
     id = db.Column(db.Integer, primary_key=True)
-    
-    # Core Corporate Identifiers (Unique, Index-optimized)
     employee_id = db.Column(db.String(50), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    
-    # Cryptographic Perimeter Security
     password_hash = db.Column(db.String(255), nullable=False)
-    
-    # Role Enforcement Perimeter ('HR' or 'Employee')
     role = db.Column(db.String(20), nullable=False, default='Employee')
     
-    # Authentication & Email Verification Flow Properties
+    # Profile Details (Linked to profile.html)
+    job_title = db.Column(db.String(100), default='Unassigned')
+    salary_structure = db.Column(db.String(255), default='Pending HR Allocation')
+    address = db.Column(db.Text, nullable=True)
+    phone = db.Column(db.String(20), nullable=True)
+    profile_picture = db.Column(db.String(255), nullable=True, default=None)
+    
     email_verified = db.Column(db.Boolean, default=False, nullable=False)
     verification_token = db.Column(db.String(100), unique=True, nullable=True)
     token_expires_at = db.Column(db.DateTime, nullable=True)
-    
-    # Audit Trail Lifecycles
-    created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
-    updated_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now(), onupdate=db.func.now())
 
     @property
     def password(self):
-        """Prevents direct plain-text reading of the password property."""
-        raise AttributeError('Password is not a readable system attribute.')
+        raise AttributeError('Password is not readable.')
 
     @password.setter
     def password(self, plain_text_password):
-        """Intercepts, hashes, and secures plain-text credentials."""
         self.password_hash = generate_password_hash(plain_text_password)
 
     def verify_password(self, plain_text_password):
-        """
-        Safely evaluates plain-text passwords against the stored cryptographic hash.
-        Protects against timing attacks.
-        """
         return check_password_hash(self.password_hash, plain_text_password)
 
     def is_token_valid(self):
-        """Evaluates whether the active verification token is within its valid operational lifespan."""
-        if not self.token_expires_at:
-            return False
-        # Ensure the expiry check is timezone-naive matching SQLite/PostgreSQL default configurations
+        if not self.token_expires_at: return False
         return datetime.now(timezone.utc).replace(tzinfo=None) < self.token_expires_at
 
-    def __repr__(self):
-        return f"<User {self.employee_id} - Role: {self.role}>"
+class Attendance(db.Model):
+    """Tracks employee clock-in and clock-out cycles (Linked to attendance.html)"""
+    __tablename__ = 'attendance'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    date = db.Column(db.Date, default=lambda: datetime.now(timezone.utc).date())
+    check_in = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    check_out = db.Column(db.DateTime, nullable=True)
+    status = db.Column(db.String(20), default='Present')
 
+class LeaveRequest(db.Model):
+    """Tracks time-off requests (Linked to leaves.html)"""
+    __tablename__ = 'leave_requests'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+    reason = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='Pending') # Pending, Approved, Rejected
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
 @login_manager.user_loader
 def load_user(user_id):
-    """
-    Flask-Login callback hook. 
-    Retrieves the User record from the persistent layer during session parsing.
-    """
     return User.query.get(int(user_id))
 
 # ---------------------------------------------------------------------------
@@ -397,12 +396,119 @@ def reset_password(token):
         
     return render_template('reset_password.html', token=token)
 
-
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    """Renders the single role-branching control system dashboard interface."""
-    return render_template('dashboard.html')
+    """Renders dashboard.html with real-time employee data."""
+    # Fetch recent activity for the bottom grid
+    recent_attendance = Attendance.query.filter_by(user_id=current_user.id).order_by(Attendance.check_in.desc()).limit(3).all()
+    pending_leaves = LeaveRequest.query.filter_by(user_id=current_user.id, status='Pending').all()
+    
+    return render_template('dashboard.html', 
+                           attendance=recent_attendance, 
+                           leaves=pending_leaves)
+
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    """Renders profile.html and handles contact info & picture updates."""
+    if request.method == 'POST':
+        # 1. Update text fields
+        current_user.address = request.form.get('address', current_user.address)
+        current_user.phone = request.form.get('phone', current_user.phone)
+        
+        # 2. Handle Profile Picture Upload
+        if 'profile_picture' in request.files:
+            file = request.files['profile_picture']
+            if file and file.filename and file.filename != '':
+                # Clean the filename to prevent directory traversal attacks
+                filename = secure_filename(file.filename)
+                
+                # Append user ID to make the filename unique (e.g., user_1_photo.jpg)
+                ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'jpg'
+                new_filename = f"user_{current_user.id}_avatar.{ext}"
+                
+                # Ensure the upload directory exists
+                upload_folder = os.path.join(app.root_path, 'static', 'profile_pics')
+                os.makedirs(upload_folder, exist_ok=True)
+                
+                # Save the physical file and update the database record
+                file.save(os.path.join(upload_folder, new_filename))
+                current_user.profile_picture = new_filename
+
+        db.session.commit()
+        flash("Profile parameters updated successfully.", "success")
+        return redirect(url_for('profile'))
+        
+    return render_template('profile.html', user=current_user)
+
+@app.route('/attendance', methods=['GET', 'POST'])
+@login_required
+def attendance():
+    """Renders attendance.html and handles daily clock cycles."""
+    today = datetime.now(timezone.utc).date()
+    record = Attendance.query.filter_by(user_id=current_user.id, date=today).first()
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        
+        if action == 'check_in' and not record:
+            new_record = Attendance(user_id=current_user.id, status='Present')  # type: ignore
+            db.session.add(new_record)
+            db.session.commit()
+            flash("Checked in successfully.", "success")
+            
+        elif action == 'check_out' and record and not record.check_out:
+            record.check_out = datetime.now(timezone.utc).replace(tzinfo=None)
+            
+            # Calculate hours worked for Half Day logic
+            time_diff = record.check_out - record.check_in
+            hours_worked = time_diff.total_seconds() / 3600
+            if hours_worked < 4.0:
+                record.status = 'Half Day'
+                
+            db.session.commit()
+            flash("Checked out successfully.", "success")
+            
+        return redirect(url_for('attendance'))
+        
+    # Fetch all history for the logged-in employee (Employee-only view enforced here)
+    history = Attendance.query.filter_by(user_id=current_user.id).order_by(Attendance.date.desc()).all()
+    
+    # Determine UI states for the buttons
+    is_checked_in = record is not None
+    is_checked_out = record.check_out is not None if record else False
+
+    return render_template('attendance.html', 
+                           history=history,
+                           is_checked_in=is_checked_in,
+                           is_checked_out=is_checked_out)
+
+
+@app.route('/leave-requests', methods=['GET', 'POST'])
+@login_required
+def leave_requests():
+    """Renders leaves.html and submits new time-off requests."""
+    if request.method == 'POST':
+        start_str = request.form.get('start_date')
+        end_str = request.form.get('end_date')
+        reason = request.form.get('reason')
+        
+        if start_str and end_str and reason:
+            start = datetime.strptime(start_str, '%Y-%m-%d').date()
+            end = datetime.strptime(end_str, '%Y-%m-%d').date()
+            
+            new_leave = LeaveRequest(user_id=current_user.id, start_date=start, end_date=end, reason=reason)  # type: ignore
+            db.session.add(new_leave)
+            db.session.commit()
+            flash("Leave request submitted for HR approval.", "success")
+            
+        return redirect(url_for('leave_requests'))
+        
+    # Fetch history for the data table
+    requests = LeaveRequest.query.filter_by(user_id=current_user.id).order_by(LeaveRequest.created_at.desc()).all()
+    return render_template('leaves.html', requests=requests)
 
 
 @app.route('/logout')
