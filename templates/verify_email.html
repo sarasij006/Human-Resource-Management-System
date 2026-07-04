@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Handshake Lifecycle Parsing | HRMS Core{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5 glass-card p-5 rounded-4 text-center animate-slide-up">
+        {% if success %}
+            <div class="icon-shape mb-4 bg-success-glow d-inline-flex align-items-center justify-content-center rounded-circle">
+                <i class="fa-solid fa-square-check text-success fs-3"></i>
+            </div>
+            <h3 class="text-white mb-2 fw-bold">Identity Handshake Validated</h3>
+            <p class="text-muted small mb-4">Your digital profile parameter state has shifted to verified status inside the database engine. Your node is now authorized to operate.</p>
+            <a href="{{ url_for('login') }}" class="btn btn-primary-gradient w-100 py-2.5 rounded-3 fw-semibold text-decoration-none d-block">Initialize Session Login</a>
+        {% else %}
+            <div class="icon-shape mb-4 bg-danger-glow d-inline-flex align-items-center justify-content-center rounded-circle">
+                <i class="fa-solid fa-triangle-exclamation text-danger fs-3"></i>
+            </div>
+            <h3 class="text-white mb-2 fw-bold">Validation Handshake Fault</h3>
+            <p class="text-muted small mb-4">The cryptographically generated token structure has either expired, been altered, or already processed by another routine worker process.</p>
+            <a href="{{ url_for('landing') }}" class="btn btn-glass w-100 py-2.5 rounded-3 text-white text-decoration-none d-block">Return to Entryway</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0b0f19; color: #c3c4c7; margin: 0; padding: 40px; }
+        .card { max-width: 500px; margin: 0 auto; background: #121824; border: 1px solid #222f47; border-radius: 12px; padding: 32px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { color: #ea580c; font-weight: 600; margin-top: 0; }
+        p { line-height: 1.6; font-size: 14px; color: #94a3b8; }
+        .btn { display: inline-block; background: linear-gradient(135deg, #ea580c 0%, #d97706 100%); color: #ffffff !important; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-weight: 600; font-size: 14px; margin: 20px 0; box-shadow: 0 4px 15px rgba(234,88,12,0.4); text-align: center; }
+        .footer { font-size: 11px; color: #475569; border-top: 1px solid #1e293b; padding-top: 16px; margin-top: 24px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Credential Overwrite Authorization Payload</h2>
+        <p>An emergency access recovery command sequence was triggered for your profile context. To execute a complete credential database override, process this authorization vector link within 60 minutes:</p>
+        <div style="text-align: center;">
+            <a href="{{ url_for('reset_password', token=token, _external=True) }}" class="btn">Authorize Matrix Overwrite</a>
+        </div>
+        <p>If you did not initiate this recovery protocol sequence, access your security terminal and verify logs immediately.</p>
+        <div class="footer">
+            Automated Identity Matrix Recovery. System: HRMS Perimeter Defense Layer.
+        </div>
+    </div>
+</body>
+</html>

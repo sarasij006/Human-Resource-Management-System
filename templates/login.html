@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Sign In | HRMS Authentication Core{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4 glass-card p-4 rounded-4 shadow-lg card-glow animate-slide-up">
+        <div class="text-center mb-4">
+            <div class="icon-shape mb-3 bg-primary-glow d-inline-flex align-items-center justify-content-center rounded-circle">
+                <i class="fa-solid fa-shield-halved text-primary fs-4"></i>
+            </div>
+            <h3 class="text-white mb-1 fw-bold">Welcome Back</h3>
+            <p class="text-muted small">Enter your parameters to access the ecosystem</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('login') }}" id="loginForm" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="mb-3 position-relative input-group-custom">
+                <label class="form-label text-muted small fw-semibold">Corporate Email</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-envelope field-icon"></i>
+                    <input type="email" name="email" id="email" class="form-control" placeholder="name@company.com" required>
+                </div>
+                <div class="invalid-feedback text-danger small mt-1">Please enter a valid corporate email.</div>
+            </div>
+
+            <div class="mb-3 position-relative input-group-custom">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label class="form-label text-muted small fw-semibold mb-0">Security Code</label>
+                    <a href="{{ url_for('forgot_password') }}" class="small link-accent text-decoration-none">Forgot?</a>
+                </div>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-lock field-icon"></i>
+                    <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required>
+                    <button type="button" class="btn-toggle-password" data-target="password">
+                        <i class="fa-solid fa-eye text-muted"></i>
+                    </button>
+                </div>
+                <div class="invalid-feedback text-danger small mt-1">Authentication credential field required.</div>
+            </div>
+
+            <div class="mb-4 form-check d-flex align-items-center gap-2 custom-checkbox">
+                <input type="checkbox" name="remember" id="remember" class="form-check-input">
+                <label class="form-check-label text-muted small" for="remember">Keep session persistent</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary-gradient w-100 py-2.5 rounded-3 fw-semibold d-flex align-items-center justify-content-center gap-2" id="submitBtn">
+                <span>Authenticate Instance</span>
+                <div class="spinner-border spinner-border-sm d-none" id="loadingSpinner" role="status"></div>
+            </button>
+        </form>
+
+        <div class="text-center mt-4 pt-3 border-top border-glass">
+            <p class="text-muted small mb-0">New identity registration? <a href="{{ url_for('register') }}" class="link-accent text-decoration-none fw-semibold">Request Access</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

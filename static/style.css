@@ -1,0 +1,256 @@
+/* ==========================================================================
+   1. GLOBAL SYSTEM ARCHITECTURE & VARIABLE MAPS
+   ========================================================================== */
+:root {
+    --bg-dark: #080c14;
+    --primary-core: #6366f1;
+    --primary-light: #818cf8;
+    --accent-core: #a855f7;
+    --glass-background: rgba(15, 23, 42, 0.45);
+    --glass-border-color: rgba(255, 255, 255, 0.08);
+    --glass-border-highlight: rgba(255, 255, 255, 0.15);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    
+    --glow-primary: rgba(99, 102, 241, 0.15);
+    --glow-warning: rgba(245, 158, 11, 0.12);
+    --glow-success: rgba(16, 185, 129, 0.12);
+    --glow-danger: rgba(239, 68, 68, 0.12);
+}
+
+* {
+    box-sizing: border-box;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    margin: 0;
+    overflow-x: hidden;
+}
+
+/* ==========================================================================
+   2. GLASSMORPHISM STRUCTURES & UTILITIES
+   ========================================================================== */
+.glass-card {
+    background: var(--glass-background);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid var(--glass-border-color);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), 
+                box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+                border-color 0.3s ease;
+}
+
+.card-glow:hover {
+    border-color: var(--glass-border-highlight);
+    box-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.25);
+}
+
+/* Visual Mesh Abstract Blob Artifacts */
+.blur-blob {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    filter: blur(120px);
+    z-index: 0;
+    opacity: 0.35;
+    pointer-events: none;
+}
+.blob-1 {
+    top: -10%;
+    left: -10%;
+    background: linear-gradient(135deg, var(--primary-core), var(--accent-core));
+}
+.blob-2 {
+    bottom: -10%;
+    right: -10%;
+    background: linear-gradient(135deg, #22d3ee, #3b82f6);
+}
+
+.z-index-1 { z-index: 1; }
+.transition-all { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+.border-glass { border-color: var(--glass-border-color) !important; }
+.bg-dark-soft { background: rgba(0, 0, 0, 0.25) !important; }
+.bg-dark-soft-alt { background: rgba(0, 0, 0, 0.15); }
+.border-dashed { border-style: dashed !important; }
+.progress-xs { height: 4px; }
+.extra-small { font-size: 0.72rem; }
+
+/* ==========================================================================
+   3. TYPOGRAPHY & GRADIENTS
+   ========================================================================== */
+.gradient-text {
+    background: linear-gradient(135deg, #fff 30%, var(--primary-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.link-accent {
+    color: var(--primary-light);
+    transition: color 0.2s ease;
+}
+.link-accent:hover {
+    color: #a5b4fc;
+    text-shadow: 0 0 8px rgba(165, 180, 252, 0.4);
+}
+
+/* ==========================================================================
+   4. UI CORE COMPONENTS (BUTTONS, INPUTS, CHECKBOXES)
+   ========================================================================== */
+.btn-primary-gradient {
+    background: linear-gradient(135deg, var(--primary-core) 0%, #4f46e5 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-primary-gradient:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
+    color: #fff;
+}
+.btn-primary-gradient:active { transform: translateY(1px); }
+
+.btn-glass {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border-color);
+    color: var(--text-primary);
+}
+.btn-glass:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--glass-border-highlight);
+    color: #fff;
+}
+
+.btn-glass-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+.btn-glass-danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+}
+
+/* Custom Field Layout Framework */
+.input-group-custom .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.input-group-custom .field-icon {
+    position: absolute;
+    left: 14px;
+    color: var(--text-secondary);
+    pointer-events: none;
+    font-size: 0.95rem;
+}
+.input-group-custom .form-control {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border-color);
+    color: #fff;
+    padding: 11px 16px 11px 42px;
+    border-radius: 8px;
+    font-size: 0.92rem;
+    width: 100%;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.input-group-custom select.form-control {
+    appearance: none;
+    -webkit-appearance: none;
+}
+.input-group-custom .form-control:focus {
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    outline: none;
+}
+.input-group-custom .form-control::placeholder {
+    color: rgba(148, 163, 184, 0.45);
+}
+
+.btn-toggle-password {
+    position: absolute;
+    right: 4px;
+    background: transparent;
+    border: none;
+    height: 90%;
+    padding: 0 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.custom-checkbox .form-check-input {
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border-color);
+}
+.custom-checkbox .form-check-input:checked {
+    background-color: var(--primary-core);
+    border-color: var(--primary-light);
+}
+
+/* ==========================================================================
+   5. SHAPES, BADGES & DECORATIVE ARTIFACTS
+   ========================================================================== */
+.icon-shape {
+    width: 56px;
+    height: 56px;
+}
+.icon-box {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.brand-badge {
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+/* Base Custom Soft Badge Configuration Glow Wrappers */
+.bg-primary-glow { background: var(--glow-primary); color: var(--primary-light); }
+.bg-warning-glow { background: var(--glow-warning); color: #fbbf24; }
+.bg-success-glow { background: var(--glow-success); color: #34d399; }
+.bg-danger-glow { background: var(--glow-danger); color: #f87171; }
+
+.text-primary { color: var(--primary-light) !important; }
+.text-danger { color: #f87171 !important; }
+.text-warning { color: #fbbf24 !important; }
+.text-success { color: #34d399 !important; }
+.text-accent { color: var(--accent-core) !important; }
+.bg-accent-glow { background: rgba(168, 85, 247, 0.12); }
+
+/* ==========================================================================
+   6. MOTION EFFECTS & MICROSIGNALS
+   ========================================================================== */
+.metric-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulseGlow {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.2); }
+    70% { transform: scale(1.03); box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+
+.animated-fade-in { animation: fadeIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.animate-slide-up { animation: slideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.animate-pulse { animation: pulseGlow 2s infinite; }

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Control Dashboard | Enterprise Engine{% endblock %}
+{% block content %}
+<div class="row w-100 max-w-7xl mx-auto g-4">
+    <!-- Context Header Interface Block -->
+    <div class="col-12 glass-card p-4 rounded-4 d-flex flex-md-row flex-column justify-content-between align-items-md-center gap-3">
+        <div>
+            <span class="badge bg-primary-glow text-primary mb-1 rounded-pill px-2.5 py-1 small fw-semibold">Operational Node Layer</span>
+            <h2 class="text-white mb-0 fw-bold">Welcome, {{ current_user.email }}</h2>
+            <p class="text-muted small mb-0">Identifier Index Mapping: <strong class="text-light">{{ current_user.employee_id }}</strong></p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge {% if current_user.role == 'HR' %}bg-danger-glow text-danger{% else %}bg-success-glow text-success{% endif %} rounded-pill px-3 py-2 fw-semibold">
+                <i class="fa-solid {% if current_user.role == 'HR' %}fa-crown{% else %}fa-user-tie{% endif %} me-1"></i>
+                Domain Clearance: {{ current_user.role }}
+            </span>
+            <a href="{{ url_for('logout') }}" class="btn btn-glass-danger px-3 py-2 rounded-3 text-decoration-none small">
+                <i class="fa-solid fa-power-off me-1"></i> Terminate Session
+            </a>
+        </div>
+    </div>
+
+    <!-- Conditional Module Template View Injection Partition -->
+    {% if current_user.role == 'HR' %}
+        <!-- ==================== ADMINISTRATIVE LEADER DASHBOARD INTERFACE ==================== -->
+        <div class="col-md-4">
+            <div class="glass-card p-4 rounded-4 shadow-sm metric-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted small fw-semibold">Active Human Nodes</span>
+                    <i class="fa-solid fa-users text-primary fs-4 icon-box bg-primary-glow rounded-3 p-2"></i>
+                </div>
+                <h2 class="text-white fw-bold mb-1">1,248</h2>
+                <span class="text-success small fw-semibold"><i class="fa-solid fa-arrow-trend-up me-1"></i>+4.2% This Quarter</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="glass-card p-4 rounded-4 shadow-sm metric-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted small fw-semibold">Compliance Metric Audit</span>
+                    <i class="fa-solid fa-scale-balanced text-warning fs-4 icon-box bg-warning-glow rounded-3 p-2"></i>
+                </div>
+                <h2 class="text-white fw-bold mb-1">100.0%</h2>
+                <span class="text-muted small">No structural telemetry gaps detected</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="glass-card p-4 rounded-4 shadow-sm metric-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted small fw-semibold">System Activity Actions</span>
+                    <i class="fa-solid fa-chart-line text-accent fs-4 icon-box bg-accent-glow rounded-3 p-2"></i>
+                </div>
+                <h2 class="text-white fw-bold mb-1">42 Sec</h2>
+                <span class="text-muted small">Mean processing validation window</span>
+            </div>
+        </div>
+        
+        <div class="col-12">
+            <div class="glass-card p-4 rounded-4">
+                <h4 class="text-white mb-3 fw-bold"><i class="fa-solid fa-gears me-2 text-primary"></i>Administrative Control Partition</h4>
+                <div class="alert alert-info border-glass bg-dark-soft text-white rounded-3 mb-0 p-3 d-flex gap-3 align-items-center">
+                    <i class="fa-solid fa-circle-exclamation text-info fs-4"></i>
+                    <span class="small">The core business infrastructure systems (Employee Management, Attendance ledger routing, and Compensation processing components) are running inside standby clusters. They will bring themselves online sequentially upon initialization request.</span>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- ==================== REGULAR WORKFORCE INTERFACE PARTITION ==================== -->
+        <div class="col-md-8">
+            <div class="glass-card p-4 rounded-4 h-100">
+                <h4 class="text-white mb-3 fw-bold">Operational Timeline Profile</h4>
+                <div class="p-5 text-center border border-dashed border-glass rounded-3 bg-dark-soft-alt">
+                    <i class="fa-solid fa-folder-open text-muted fs-1 mb-3"></i>
+                    <h5 class="text-light fw-semibold">No Pending Individual Requests</h5>
+                    <p class="text-muted small mb-0">Your profile parameter data allocation reports clean structural compliance across all operational groups.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="glass-card p-4 rounded-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <h4 class="text-white mb-3 fw-bold">Security State</h4>
+                    <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
+                        <li class="d-flex justify-content-between align-items-center bg-dark-soft p-2.5 rounded-3 border-glass">
+                            <span class="text-muted small"><i class="fa-solid fa-envelope text-success me-2"></i>Email Activation Check</span>
+                            <span class="badge bg-success text-white rounded-pill">Active Verified</span>
+                        </li>
+                        <li class="d-flex justify-content-between align-items-center bg-dark-soft p-2.5 rounded-3 border-glass">
+                            <span class="text-muted small"><i class="fa-solid fa-fingerprint text-info me-2"></i>Session Access Token</span>
+                            <span class="badge bg-info text-white rounded-pill">Valid AES-256</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="mt-4 pt-3 border-top border-glass extra-small text-muted text-center">
+                    Node Connected Location IP: Telemetry Protected Context
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
