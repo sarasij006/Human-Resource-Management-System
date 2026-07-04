@@ -156,75 +156,7 @@ pip install -r requirements.txt
 7.	Configure the MySQL database.
 8.	Run the application
 python app.py
-________________________________________
-
-Screenshots
-
-•	Landing Page
-
-
-
-
-
-
-
-
-
-
-
-•	Register Page
-
-
-•	Login Page
-
-
-
-
-
-
-•	Employee Dashboard
-
-•	HR/ Admin Console - Employee Directory
-
-
-
-
-
-•	HR/ Admin Console - Leave Request
-
-•	HR/ Admin Console – Attendance
-
-
-
-•	HR /Admin Console Payroll
-
-
-
-•	Email Verification (Initiation)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-•	Email Verification Acceptance
-
-________________________________________
+_______________________________________
 Future Enhancements
 •	Email notifications
 •	Face recognition attendance
